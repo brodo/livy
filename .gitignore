@@ -1,0 +1,13 @@
+.idea/
+*iml
+gen/
+out/
+.svn/
+.DS_Store
+.classpath
+.project
+bin/
+explore.zargo
+explore.zargo~
+local.properties
+build.xml
