@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Parcelable;
 
+import java.util.HashMap;
+
 /**
  * Created by Julian Dax on 26/03/14.
  * This util class makes it easy to send intents to the EventService
@@ -13,6 +15,10 @@ import android.os.Parcelable;
 public class EventUtils {
     public static void sendEventToEventService(Parcelable event, Context context) {
         context.startService(makeIntentWithEvent(event, context));
+    }
+
+    public static void sendEventToEventService(HashMap event, String name, Context context) {
+        context.startService(makeIntentWithEventMap(event, name, context));
     }
 
     public static void registerSurveyWithEventService(int surveyId, Context context) {
@@ -81,6 +87,14 @@ public class EventUtils {
         Intent intent = new Intent(context, EventService.class);
         intent.putExtra("command", EventService.ADD_EVENT);
         intent.putExtra("event", event);
+        return intent;
+    }
+
+    private static Intent makeIntentWithEventMap(HashMap event, String name, Context context){
+        Intent intent = new Intent(context, EventService.class);
+        intent.putExtra("command", EventService.ADD_EVENT_MAP);
+        intent.putExtra("event", event);
+        intent.putExtra("name", name);
         return intent;
     }
 

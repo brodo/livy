@@ -100,6 +100,8 @@ public class EsperWrapper{
         runtime.sendEvent(event);
     }
 
+    public void eventHappened(HashMap event, String name) { runtime.sendEvent(event, name);}
+
     public long getCurrentTime(){
         return runtime.getCurrentTime();
     }
