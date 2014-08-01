@@ -10,6 +10,8 @@ import android.util.Log;
 import de.unisiegen.livy.esperwrapper.core.EsperWrapper;
 import de.unisiegen.livy.esperwrapper.core.IComplexEventListener;
 
+import java.util.HashMap;
+
 
 /**
  * Created by Julian Dax on 24/03/14.
@@ -21,14 +23,15 @@ public class EventService extends Service {
     public static final String ACTION_COMPLEX_EVENT = "de.unisiegen.livy.COMPLEX_EVENT";
     public static final String ACTION_CEP_SERVICE = "de.unisiegen.livy.CEP_SERVICE";
     public static final int ADD_EVENT = 0;
-    public static final int REGISTER_SURVEY = 1;
-    public static final int MAKE_EPL_QUERY = 2;
-    public static final int MAKE_EPL_QUERY_AND_TRIGGER_SURVEY = 3;
-    public static final int DELETE_SURVEY = 4;
-    public static final int DELETE_QUERY = 5;
-    public static final int DELETE_ALL_QUERIES_BESIDES = 6;
-    public static final int DELETE_ALL_SURVEYS_BESIDES = 7;
-    public static final int WAKE_UP = 8;
+    public static final int ADD_EVENT_MAP = 1;
+    public static final int REGISTER_SURVEY = 2;
+    public static final int MAKE_EPL_QUERY = 3;
+    public static final int MAKE_EPL_QUERY_AND_TRIGGER_SURVEY = 4;
+    public static final int DELETE_SURVEY = 5;
+    public static final int DELETE_QUERY = 6;
+    public static final int DELETE_ALL_QUERIES_BESIDES = 7;
+    public static final int DELETE_ALL_SURVEYS_BESIDES = 8;
+    public static final int WAKE_UP = 9;
     public EsperWrapper esperWrapper;
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -37,6 +40,9 @@ public class EventService extends Service {
                 case ADD_EVENT:
                     esperWrapper.eventHappened(intent.getParcelableExtra("event"));
                     break;
+                case ADD_EVENT_MAP:
+                        esperWrapper.eventHappened((HashMap)intent.getSerializableExtra("event"), intent.getStringExtra("name"));
+                        break;
                 case REGISTER_SURVEY:
                     Log.d(DBG_TAG, "Survey Registered:");
                     Log.d(DBG_TAG, String.valueOf(getSurvey(intent)));
