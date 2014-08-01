@@ -10,12 +10,13 @@ import android.util.Log;
  * Starts surveys if a complex event occurred.
  */
 public class ComplexEventReceiver extends BroadcastReceiver {
-
+    public String DBG_STR = "ComplexEventReceiver";
     @Override
     public void onReceive(Context context, Intent intent) {
         int surveyId = intent.getIntExtra("survey", -1);
+        Log.d(DBG_STR, String.format("Survey No %d triggered!", surveyId));
         if (surveyId != -1) {
-            Log.d("ComplexEventReceiver", String.format("Survey No %d triggered!", surveyId));
+            Log.d(DBG_STR, String.format("Survey No %d triggered!", surveyId));
         }
     }
 }

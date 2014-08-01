@@ -12,87 +12,87 @@ import android.os.Parcelable;
  */
 public class EventUtils {
     public static void sendEventToEventService(Parcelable event, Context context) {
-        context.startService(makeIntentWithEvent(event, context));
+        context.sendBroadcast(makeIntentWithEvent(event, context));
     }
 
     public static void registerSurveyWithEventService(int surveyId, Context context) {
-        context.startService(makeIntentWithSurveyId(surveyId, context));
+        context.sendBroadcast(makeIntentWithSurveyId(surveyId, context));
     }
 
     public static void sendEplQueryToEventService(String query, Context context) {
-        context.startService(makeIntentWithEplQuery(query, context));
+        context.sendBroadcast(makeIntentWithEplQuery(query, context));
     }
 
     public static void deleteEplQueryById(int id, Context context){
-        context.startService(makeIntentForDeletingQuery(id, context));
+        context.sendBroadcast(makeIntentForDeletingQuery(id, context));
     }
 
     public static void deleteQuestionnaireById(int id, Context context){
-        context.startService(makeIntentForDeletingSurveyWithId(id, context));
+        context.sendBroadcast(makeIntentForDeletingSurveyWithId(id, context));
     }
 
     public static void deleteAllQueriesBesides(String[] exceptionIds, Context context){
-        context.startService(makeIntentForDeletingAllQueriesBesides(exceptionIds, context));
+        context.sendBroadcast(makeIntentForDeletingAllQueriesBesides(exceptionIds, context));
     }
 
     public static void sendEplQueryWithSurveyToTriggerToService(String query, int queryId, int surveyId, Context context) {
-        context.startService(makeIntentWithEplQueryAndSurveyId(query, queryId, surveyId, context));
+        context.sendBroadcast(makeIntentWithEplQueryAndSurveyId(query, queryId, surveyId, context));
     }
 
     public static void wakeUpService(Context context){
-        context.startService(makeIntentForWakingUpService(context));
+        context.sendBroadcast(makeIntentForWakingUpService(context));
     }
 
     private static Intent makeIntentForWakingUpService(Context context){
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.WAKE_UP);
         return intent;
     }
 
     private static Intent makeIntentForDeletingAllQueriesBesides(String[] queries, Context context){
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.DELETE_ALL_QUERIES_BESIDES);
         intent.putExtra("queries", queries);
         return intent;
     }
 
     private static Intent makeIntentForDeletingQuery(int queryId, Context context){
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.DELETE_QUERY);
         intent.putExtra("queryId", queryId);
         return intent;
     }
 
     private static Intent makeIntentForDeletingSurveyWithId(int surveyId, Context context){
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.DELETE_SURVEY);
         intent.putExtra("survey", surveyId);
         return intent;
     }
 
     private static Intent makeIntentWithSurveyId(int surveyId, Context context) {
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.REGISTER_SURVEY);
         intent.putExtra("survey", surveyId);
         return intent;
     }
 
     private static Intent makeIntentWithEvent(Parcelable event, Context context) {
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.ADD_EVENT);
         intent.putExtra("event", event);
         return intent;
     }
 
     private static Intent makeIntentWithEplQuery(String query, Context context) {
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.MAKE_EPL_QUERY);
         intent.putExtra("query", query);
         return intent;
     }
 
     private static Intent makeIntentWithEplQueryAndSurveyId(String query, int queryId, int surveyId, Context context) {
-        Intent intent = new Intent(context, EventService.class);
+        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
         intent.putExtra("command", EventService.MAKE_EPL_QUERY_AND_TRIGGER_SURVEY);
         intent.putExtra("query", query);
         intent.putExtra("id", queryId);
