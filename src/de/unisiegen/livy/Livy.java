@@ -12,48 +12,39 @@ import java.util.HashMap;
  *
  * @see de.unisiegen.livy.EventService
  */
-public class EventUtils {
-    public static void sendEventToEventService(Parcelable event, Context context) {
+public class Livy {
+    public static void processEvent(Parcelable event, Context context) {
         context.sendBroadcast(makeIntentWithEvent(event, context));
     }
 
-    public static void sendEventToEventService(HashMap event, String name, Context context) {
+    public static void processEvent(HashMap event, String name, Context context) {
         context.startService(makeIntentWithEventMap(event, name, context));
     }
 
-    public static void registerSurveyWithEventService(int surveyId, Context context) {
+    public static void saveSurveyId(int surveyId, Context context) {
         context.sendBroadcast(makeIntentWithSurveyId(surveyId, context));
     }
 
-    public static void sendEplQueryToEventService(String query, Context context) {
+    public static void saveEplPattern(String query, Context context) {
         context.sendBroadcast(makeIntentWithEplQuery(query, context));
     }
 
-    public static void deleteEplQueryById(int id, Context context){
-        context.sendBroadcast(makeIntentForDeletingQuery(id, context));
-    }
-
-    public static void deleteQuestionnaireById(int id, Context context){
-        context.sendBroadcast(makeIntentForDeletingSurveyWithId(id, context));
-    }
-
-    public static void deleteAllQueriesBesides(String[] exceptionIds, Context context){
-        context.sendBroadcast(makeIntentForDeletingAllQueriesBesides(exceptionIds, context));
-    }
-
-    public static void sendEplQueryWithSurveyToTriggerToService(String query, int queryId, int surveyId, Context context) {
+    public static void saveEplPatternWithSurveyToTrigger(String query, int queryId, int surveyId, Context context) {
         context.sendBroadcast(makeIntentWithEplQueryAndSurveyId(query, queryId, surveyId, context));
     }
 
-    public static void wakeUpService(Context context){
-        context.sendBroadcast(makeIntentForWakingUpService(context));
+    public static void deleteEplPatternById(int id, Context context){
+        context.sendBroadcast(makeIntentForDeletingQuery(id, context));
     }
 
-    private static Intent makeIntentForWakingUpService(Context context){
-        Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
-        intent.putExtra("command", EventService.WAKE_UP);
-        return intent;
+    public static void deleteSurveyId(int id, Context context){
+        context.sendBroadcast(makeIntentForDeletingSurveyWithId(id, context));
     }
+
+    public static void deleteAllEplPatternsBesides(String[] exceptionIds, Context context){
+        context.sendBroadcast(makeIntentForDeletingAllQueriesBesides(exceptionIds, context));
+    }
+
 
     private static Intent makeIntentForDeletingAllQueriesBesides(String[] queries, Context context){
         Intent intent = new Intent(EventService.ACTION_CEP_SERVICE);
