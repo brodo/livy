@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
+import de.unisiegen.livy.esperwrapper.core.AsperLoader;
 import de.unisiegen.livy.esperwrapper.core.EsperWrapper;
 import de.unisiegen.livy.esperwrapper.core.IComplexEventListener;
 
@@ -90,7 +91,7 @@ public class EventService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        esperWrapper =  new EsperWrapper();
+        esperWrapper =  new EsperWrapper(new AsperLoader(this));
         IntentFilter  filter = new IntentFilter();
         filter.addAction(EventService.ACTION_CEP_SERVICE);
         registerReceiver(receiver, filter);

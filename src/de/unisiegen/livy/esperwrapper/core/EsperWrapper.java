@@ -1,8 +1,6 @@
 package de.unisiegen.livy.esperwrapper.core;
 
 
-import com.espertech.esper.client.*;
-import com.espertech.esper.client.time.CurrentTimeEvent;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,17 +12,14 @@ import java.util.List;
  */
 public class EsperWrapper{
     private final HashMap<String,IComplexEventListener> listeners = new HashMap<String, IComplexEventListener>();
-    private final HashMap<String,List<EPStatement>> statements = new HashMap<String, List<EPStatement>>();
-    private EPAdministrator administrator;
-    EPRuntime runtime;
+    private final HashMap<String,List<EPStatementProxy>> statements = new HashMap<String, List<EPStatementProxy>>();
+    private AsperLoader loader;
+    private EPAdministratorProxy administrator;
+    private EPRuntimeProxy runtime;
 
-    public EsperWrapper(){
-        this(EPServiceProviderManager.getDefaultProvider());
-    }
-
-    public EsperWrapper(EPServiceProvider epServiceProvider){
-        runtime = epServiceProvider.getEPRuntime();
-        administrator = epServiceProvider.getEPAdministrator();
+    public EsperWrapper(AsperLoader asperLoader){
+        runtime = asperLoader.getEPRuntime();
+        administrator = asperLoader.getEPAdministrator();
     }
 
     public interface QueryDefinition{
@@ -33,9 +28,9 @@ public class EsperWrapper{
 
     public void unregisterQuestionnaire(String questionnaire){
         listeners.remove(questionnaire);
-        List<EPStatement> statementsForQuestionnaire = statements.get(questionnaire);
+        List<EPStatementProxy> statementsForQuestionnaire = statements.get(questionnaire);
         if(statementsForQuestionnaire != null){
-            for(EPStatement s : statementsForQuestionnaire){
+            for(EPStatementProxy s : statementsForQuestionnaire){
                 s.removeAllListeners();
             }
         }
@@ -77,7 +72,7 @@ public class EsperWrapper{
             @Override
             public void onQuery(String query, int queryId) {
                 final String queryName = Integer.valueOf(queryId).toString();
-                EPStatement statement = administrator.getStatement(queryName);
+                EPStatementProxy statement = administrator.getStatement(queryName);
                 if(statementExistsAndNeedsUpdate(statement,query)){
                     statement.destroy();
                     statement = null;
@@ -85,9 +80,9 @@ public class EsperWrapper{
                 if(statement == null) statement = statementFromStringWithName(query, queryName);
 
                 statement.removeAllListeners();
-                statement.addListener(new UpdateListener() {
+                statement.addListener(new UpdateListenerProxy() {
                     @Override
-                    public void update(EventBean[] eventBeans, EventBean[] eventBeans2) {
+                    public void update() {
                         IComplexEventListener listener = listeners.get(questionnaireName);
                         listener.eventOccurred();
                     }
@@ -108,28 +103,28 @@ public class EsperWrapper{
         return runtime.getCurrentTime();
     }
 
-    private boolean statementExistsAndNeedsUpdate(EPStatement statement, String query){
+    private boolean statementExistsAndNeedsUpdate(EPStatementProxy statement, String query){
         return (statement != null) && !statement.getText().equals(query);
     }
 
-    public void setCurrentTime(long timestamp){
-        CurrentTimeEvent timeEvent = new CurrentTimeEvent(timestamp);
-        runtime.sendEvent(timeEvent);
-    }
+//    public void setCurrentTime(long timestamp){
+//        CurrentTimeEvent timeEvent = new CurrentTimeEvent(timestamp);
+//        runtime.sendEvent(timeEvent);
+//    }
 
-    private EPStatement statementFromStringWithName(String query, String name){
+    private EPStatementProxy statementFromStringWithName(String query, String name){
         return administrator.createEPL(query, name);
     }
 
-    private void addEplStatementToStatementMap(String questionnaireName, EPStatement statement){
-        List<EPStatement> statementsForQuestionnaire = statements.get(questionnaireName);
-        if(statementsForQuestionnaire == null) statementsForQuestionnaire = new LinkedList<EPStatement>();
+    private void addEplStatementToStatementMap(String questionnaireName, EPStatementProxy statement){
+        List<EPStatementProxy> statementsForQuestionnaire = statements.get(questionnaireName);
+        if(statementsForQuestionnaire == null) statementsForQuestionnaire = new LinkedList<EPStatementProxy>();
         statementsForQuestionnaire.add(statement);
         statements.put(questionnaireName,statementsForQuestionnaire);
     }
 
 
-    private EPStatement statementFormString(String query){
+    private EPStatementProxy statementFormString(String query){
         return administrator.createEPL(query);
     }
 
