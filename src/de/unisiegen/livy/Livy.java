@@ -12,7 +12,7 @@ import java.util.HashMap;
  *
  * @see de.unisiegen.livy.EventService
  */
-public class Livy {
+public class Livy  {
     public static void processEvent(Parcelable event, Context context) {
         context.sendBroadcast(makeIntentWithEvent(event, context));
     }

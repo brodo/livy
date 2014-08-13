@@ -1,5 +1,6 @@
 package de.unisiegen.livy.esperwrapper.core;
 
+
 import com.espertech.esper.client.*;
 import com.espertech.esper.client.time.CurrentTimeEvent;
 
@@ -14,7 +15,7 @@ import java.util.List;
 public class EsperWrapper{
     private final HashMap<String,IComplexEventListener> listeners = new HashMap<String, IComplexEventListener>();
     private final HashMap<String,List<EPStatement>> statements = new HashMap<String, List<EPStatement>>();
-    private  EPAdministrator administrator;
+    private EPAdministrator administrator;
     EPRuntime runtime;
 
     public EsperWrapper(){
