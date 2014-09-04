@@ -83,6 +83,7 @@ public class Livy  {
 
     private static Intent makeIntentWithEventMap(HashMap event, String name, Context context){
         Intent intent = new Intent(context, EventService.class);
+
         intent.putExtra("command", EventService.ADD_EVENT_MAP);
         intent.putExtra("event", event);
         intent.putExtra("name", name);
