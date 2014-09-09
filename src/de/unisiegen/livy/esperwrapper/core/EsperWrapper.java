@@ -1,25 +1,30 @@
 package de.unisiegen.livy.esperwrapper.core;
 
 
+import dalvik.system.DexClassLoader;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.util.*;
 
 /**
  * Created by Julian Dax on 26/02/14.
  */
 public class EsperWrapper{
     private final HashMap<String,IComplexEventListener> listeners = new HashMap<String, IComplexEventListener>();
-    private final HashMap<String,List<EPStatementProxy>> statements = new HashMap<String, List<EPStatementProxy>>();
+    private final HashMap<String,List<Object>> statements = new HashMap<String, List<Object>>();
     private AsperLoader loader;
-    private EPAdministratorProxy administrator;
-    private EPRuntimeProxy runtime;
+    private Object administrator;
+    private Object runtime;
+    private DexClassLoader asperClassLoader;
+
 
     public EsperWrapper(AsperLoader asperLoader){
         runtime = asperLoader.getEPRuntime();
         administrator = asperLoader.getEPAdministrator();
+        asperClassLoader = asperLoader.getDexClassLoader();
     }
 
     public interface QueryDefinition{
@@ -28,24 +33,61 @@ public class EsperWrapper{
 
     public void unregisterQuestionnaire(String questionnaire){
         listeners.remove(questionnaire);
-        List<EPStatementProxy> statementsForQuestionnaire = statements.get(questionnaire);
+        List<Object> statementsForQuestionnaire = statements.get(questionnaire);
         if(statementsForQuestionnaire != null){
-            for(EPStatementProxy s : statementsForQuestionnaire){
-                s.removeAllListeners();
+            for(Object s : statementsForQuestionnaire){
+                try {
+                    Method removeAllListeners = s.getClass().getMethod("removeAllListeners");
+                    removeAllListeners.invoke(s);
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+
             }
         }
         statementsForQuestionnaire.remove(questionnaire);
     }
 
     public void removeQuery(int queryId){
-        administrator.getStatement(Integer.valueOf(queryId).toString()).destroy();
+        removeQuery(Integer.valueOf(queryId).toString());
+    }
+
+    public void removeQuery(String queryId){
+        try {
+            Method getStatement = administrator.getClass().getMethod("getStatement", String.class);
+            Object statement = getStatement.invoke(administrator, queryId);
+            Method destroy = statement.getClass().getMethod("destroy");
+            destroy.invoke(statement);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public void removeAllQueriesBesides(String[] exceptions){
-        LinkedList<String> exceptionList = new LinkedList<String>(Arrays.asList(exceptions));
-        for(String name : administrator.getStatementNames()){
-            if(!exceptionList.contains(name)) administrator.getStatement(name).destroy();
+        try {
+            LinkedList<String> exceptionList = new LinkedList<String>(Arrays.asList(exceptions));
+            Method getStatementNames = administrator.getClass().getMethod("getStatementNames");
+            List<String> statements = (List<String>) getStatementNames.invoke(administrator);
+            for(String name : statements){
+                if(!exceptionList.contains(name)) removeQuery(name);
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
         }
+
     }
 
     public void removeAllSurveysBesides(String[] surveyIds){
@@ -63,7 +105,16 @@ public class EsperWrapper{
     }
 
     public void doEplQuery(String epl){
-        administrator.createEPL(epl);
+        try {
+            Method createEPL = administrator.getClass().getMethod("createEPL", String.class);
+            createEPL.invoke(administrator, epl);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
     }
 
     public QueryDefinition triggerQuestionnaire(final String questionnaireName) {
@@ -71,61 +122,134 @@ public class EsperWrapper{
         return new QueryDefinition(){
             @Override
             public void onQuery(String query, int queryId) {
-                final String queryName = Integer.valueOf(queryId).toString();
-                EPStatementProxy statement = administrator.getStatement(queryName);
-                if(statementExistsAndNeedsUpdate(statement,query)){
-                    statement.destroy();
-                    statement = null;
-                }
-                if(statement == null) statement = statementFromStringWithName(query, queryName);
+                try {
+                    final String queryName = Integer.valueOf(queryId).toString();
+                    Method getStatement = null;
+                    getStatement = administrator.getClass().getMethod("getStatement", String.class);
+                    Object statement = getStatement.invoke(administrator, queryName);
 
-                statement.removeAllListeners();
-                statement.addListener(new UpdateListenerProxy() {
-                    @Override
-                    public void update() {
-                        IComplexEventListener listener = listeners.get(questionnaireName);
-                        listener.eventOccurred();
+                    if(statementExistsAndNeedsUpdate(statement,query)){
+                        Method destroy = statement.getClass().getMethod("destroy");
+                        destroy.invoke(statement);
+                        statement = null;
                     }
-                });
-                statement.start();
-                addEplStatementToStatementMap(questionnaireName, statement);
+                    if(statement == null) statement = statementFromStringWithName(query, queryName);
+                    Method removeAllListeners = statement.getClass().getMethod("removeAllListeners");
+                    removeAllListeners.invoke(statement);
+
+
+
+                    Class updateListenerClass = asperClassLoader.loadClass("com.espertech.esper.client.UpdateListener");
+                    Method addListener = statement.getClass().getMethod("addListener", updateListenerClass);
+
+                    Object updateListener = Proxy.newProxyInstance(statement.getClass().getClassLoader(),
+                            new Class[]{updateListenerClass}, new InvocationHandler() {
+                                @Override
+                                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                                    IComplexEventListener listener = listeners.get(questionnaireName);
+                                    listener.eventOccurred();
+                                    return null;
+                                }
+                            });
+                    addListener.invoke(statement, updateListener);
+
+                    Method start = statement.getClass().getMethod("start");
+                    start.invoke(statement);
+                    addEplStatementToStatementMap(questionnaireName, statement);
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+
             }
         };
     }
 
     public void eventHappened(Object event){
-        runtime.sendEvent(event);
+        try {
+            Method sendEvent = runtime.getClass().getMethod("sendEvent", Object.class);
+            sendEvent.invoke(runtime, event);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void eventHappened(HashMap event, String name) { runtime.sendEvent(event, name);}
-
-    public long getCurrentTime(){
-        return runtime.getCurrentTime();
+    public void eventHappened(HashMap event, String name) {
+        try {
+            Method sendEvent = runtime.getClass().getMethod("sendEvent", Map.class, String.class);
+            sendEvent.invoke(runtime, event, name);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
     }
 
-    private boolean statementExistsAndNeedsUpdate(EPStatementProxy statement, String query){
-        return (statement != null) && !statement.getText().equals(query);
+
+    private boolean statementExistsAndNeedsUpdate(Object statement, String query){
+        if(statement == null) return false;
+        try {
+            Method getText = statement.getClass().getMethod("getText");
+            String text = (String) getText.invoke(statement);
+            return text.equals(query);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return false;
     }
 
-//    public void setCurrentTime(long timestamp){
-//        CurrentTimeEvent timeEvent = new CurrentTimeEvent(timestamp);
-//        runtime.sendEvent(timeEvent);
-//    }
 
-    private EPStatementProxy statementFromStringWithName(String query, String name){
-        return administrator.createEPL(query, name);
+    private Object statementFromStringWithName(String query, String name){
+        Method createEPL = null;
+        try {
+            createEPL = administrator.getClass().getMethod("createEPL", String.class, String.class);
+            return createEPL.invoke(administrator, query, name);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
-    private void addEplStatementToStatementMap(String questionnaireName, EPStatementProxy statement){
-        List<EPStatementProxy> statementsForQuestionnaire = statements.get(questionnaireName);
-        if(statementsForQuestionnaire == null) statementsForQuestionnaire = new LinkedList<EPStatementProxy>();
+    private void addEplStatementToStatementMap(String questionnaireName, Object statement){
+        List<Object> statementsForQuestionnaire = statements.get(questionnaireName);
+        if(statementsForQuestionnaire == null) statementsForQuestionnaire = new LinkedList<Object>();
         statementsForQuestionnaire.add(statement);
         statements.put(questionnaireName,statementsForQuestionnaire);
     }
 
-
-    private EPStatementProxy statementFormString(String query){
-        return administrator.createEPL(query);
+    private Object statementFormString(String query){
+        try {
+            Method createEpl = administrator.getClass().getMethod("createEPL", String.class);
+            return createEpl.invoke(administrator, query);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }

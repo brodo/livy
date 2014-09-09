@@ -91,6 +91,7 @@ public class EventService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(DBG_TAG, "Livy Service Created");
         esperWrapper =  new EsperWrapper(new AsperLoader(this));
         IntentFilter  filter = new IntentFilter();
         filter.addAction(EventService.ACTION_CEP_SERVICE);

@@ -31,6 +31,7 @@ public class AsperLoader {
             Method getDefaultProvider =  epServiceProviderManagerClass.getMethod("getDefaultProvider");
             Object epServiceProvider = getDefaultProvider.invoke(null);
             Method getEPRuntime = epServiceProvider.getClass().getMethod("getEPRuntime");
+
             epRuntime = getEPRuntime.invoke(epServiceProvider);
             epRuntimeClass = epRuntime.getClass();
             Method getEPAdministrator = epServiceProvider.getClass().getMethod("getEPAdministrator");
@@ -39,15 +40,18 @@ public class AsperLoader {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
-    public EPRuntimeProxy getEPRuntime(){
-       return new EPRuntimeProxy(epRuntime, epRuntimeClass);
+    public DexClassLoader getDexClassLoader(){
+        return dexClassLoader;
     }
 
-    public EPAdministratorProxy getEPAdministrator() {
-        return new EPAdministratorProxy(epAdministrator, epAdministratorClass);
+    public Object getEPRuntime(){
+       return epRuntime;
+    }
+
+    public Object getEPAdministrator() {
+        return epAdministrator;
     }
 
     private boolean doesFileExistOnInternalStorage(String fileName, String folderName){
@@ -61,6 +65,7 @@ public class AsperLoader {
      * in the assets.
      */
     private boolean copyFileFromAssetsToInternalStorage(String sourceFileName, String targetFolder) {
+
 
         final File dexInternalStoragePath = new File(context.getDir(targetFolder, Context.MODE_PRIVATE),
                 sourceFileName);
@@ -100,11 +105,12 @@ public class AsperLoader {
 
     private void dexFile(String inputFileName, String inputFolderName, String outputFolderName){
         final File optimizedDexOutputPath = context.getDir(outputFolderName, Context.MODE_PRIVATE);
-        final File dexInternalStoragePath = new File(context.getDir(inputFileName, Context.MODE_PRIVATE), inputFolderName);
+        final File dexInternalStoragePath = new File(context.getDir(inputFolderName, Context.MODE_PRIVATE), inputFileName);
         // Initialize the class loader with the secondary dex file.
         dexClassLoader = new DexClassLoader(dexInternalStoragePath.getAbsolutePath(),
             optimizedDexOutputPath.getAbsolutePath(),
             null,
             context.getClassLoader());
+
     }
 }
