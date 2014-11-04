@@ -22,7 +22,7 @@ import java.util.HashMap;
 public class EventService extends Service {
     public static String DBG_TAG = "EventService";
     public static final String ACTION_COMPLEX_EVENT = "de.unisiegen.livy.COMPLEX_EVENT";
-    public static final String ACTION_CEP_SERVICE = "de.unisiegen.livy.CEP_SERVICE";
+    public static final String ACTION_CEP_SERVICE = "de.unisiegen.livy.EventService";
     public static final int ADD_EVENT = 0;
     public static final int ADD_EVENT_MAP = 1;
     public static final int REGISTER_SURVEY = 2;
@@ -87,6 +87,12 @@ public class EventService extends Service {
 
         }
     };
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return super.onStartCommand(intent, flags, startId);
+
+    }
 
     @Override
     public void onCreate() {

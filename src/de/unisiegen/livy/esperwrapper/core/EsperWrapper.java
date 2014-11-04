@@ -133,7 +133,8 @@ public class EsperWrapper{
                         destroy.invoke(statement);
                         statement = null;
                     }
-                    if(statement == null) statement = statementFromStringWithName(query, queryName);
+                    statement = (statement == null) ? statementFromStringWithName(query, queryName) : statement;
+                    if(statement == null) return;
                     Method removeAllListeners = statement.getClass().getMethod("removeAllListeners");
                     removeAllListeners.invoke(statement);
 
