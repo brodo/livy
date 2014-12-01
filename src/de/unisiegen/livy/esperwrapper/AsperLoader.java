@@ -1,4 +1,4 @@
-package de.unisiegen.livy.esperwrapper.core;
+package de.unisiegen.livy.esperwrapper;
 
 import android.content.Context;
 import dalvik.system.DexClassLoader;

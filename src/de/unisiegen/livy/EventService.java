@@ -1,15 +1,12 @@
 package de.unisiegen.livy;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.IBinder;
 import android.util.Log;
 import de.unisiegen.livy.esperwrapper.core.AsperLoader;
-import de.unisiegen.livy.esperwrapper.core.EsperWrapper;
-import de.unisiegen.livy.esperwrapper.core.IComplexEventListener;
+import de.unisiegen.livy.esperwrapper.EsperWrapper;
+import de.unisiegen.livy.esperwrapper.IComplexEventListener;
 
 import java.util.HashMap;
 
@@ -23,75 +20,96 @@ public class EventService extends Service {
     public static String DBG_TAG = "EventService";
     public static final String ACTION_COMPLEX_EVENT = "de.unisiegen.livy.COMPLEX_EVENT";
     public static final String ACTION_CEP_SERVICE = "de.unisiegen.livy.EventService";
-    public static final int ADD_EVENT = 0;
-    public static final int ADD_EVENT_MAP = 1;
+    public static final int PROCESS_EVENT_OBJECT = 0;
+    public static final int PROCESS_EVENT_MAP = 1;
     public static final int REGISTER_SURVEY = 2;
-    public static final int MAKE_EPL_QUERY = 3;
-    public static final int MAKE_EPL_QUERY_AND_TRIGGER_SURVEY = 4;
+    public static final int SAVE_EPL_PATTERN = 3;
+    public static final int SAVE_EPL_PATTERN_AND_TRIGGER_SURVEY = 4;
     public static final int DELETE_SURVEY = 5;
-    public static final int DELETE_QUERY = 6;
-    public static final int DELETE_ALL_QUERIES_BESIDES = 7;
+    public static final int DELETE_PATTERN = 6;
+    public static final int DELETE_ALL_PATTERNS_BESIDES = 7;
     public static final int DELETE_ALL_SURVEYS_BESIDES = 8;
-    public static final int WAKE_UP = 9;
     public EsperWrapper esperWrapper;
-    private final BroadcastReceiver receiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(final Context context, final Intent intent) {
-            switch (intent.getIntExtra("command", -1)) {
-                case ADD_EVENT:
-                    esperWrapper.eventHappened(intent.getParcelableExtra("event"));
-                    break;
-                case ADD_EVENT_MAP:
-                        esperWrapper.eventHappened((HashMap)intent.getSerializableExtra("event"), intent.getStringExtra("name"));
-                        break;
-                case REGISTER_SURVEY:
-                    Log.d(DBG_TAG, "Survey Registered:");
-                    Log.d(DBG_TAG, String.valueOf(getSurvey(intent)));
-                    esperWrapper.registerQuestionnaire(getSurveyName(intent), new IComplexEventListener() {
-                        @Override
-                        public void eventOccurred() {
-                            Log.d(DBG_TAG, "A Complex event happened");
-                            Intent sendingIntent = new Intent(ACTION_COMPLEX_EVENT);
-                            sendingIntent.putExtra("survey", getSurvey(intent));
-                            sendBroadcast(sendingIntent);
-                        }
-                    });
-                    break;
-                case MAKE_EPL_QUERY:
-                    esperWrapper.doEplQuery(getQuery(intent));
-                    break;
-                case MAKE_EPL_QUERY_AND_TRIGGER_SURVEY:
-                    Log.d(DBG_TAG, "EPL Registered for survey:");
-                    Log.d(DBG_TAG, getQuery(intent));
-                    Log.d(DBG_TAG, getSurveyName(intent));
-                    esperWrapper.triggerQuestionnaire(getSurveyName(intent))
-                            .onQuery(getQuery(intent), intent.getIntExtra("id", -1));
-                    break;
-                case DELETE_SURVEY:
-                    esperWrapper.unregisterQuestionnaire(Integer.valueOf(getSurvey(intent)).toString());
-                    break;
-                case DELETE_QUERY:
-                    esperWrapper.removeQuery(getQueryId(intent));
-                    break;
-                case DELETE_ALL_QUERIES_BESIDES:
-                    String[] queries = intent.getStringArrayExtra("queries");
-                    esperWrapper.removeAllQueriesBesides(queries);
-                    break;
-                case DELETE_ALL_SURVEYS_BESIDES:
-                    String[] surveyIds = intent.getStringArrayExtra("surveys");
-                    esperWrapper.removeAllSurveysBesides(surveyIds);
-                    break;
-                default:
-                    break;
-            }
 
-        }
-    };
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(final Intent intent, int flags, int startId) {
+        if(intent != null && intent.hasExtra("command"))
+            handleCommand(intent);
         return super.onStartCommand(intent, flags, startId);
+    }
 
+    private void handleCommand(final Intent intent) {
+        int commandNumber = extractCommandFromIntent(intent);
+        switch (commandNumber) {
+            case PROCESS_EVENT_OBJECT: processEventObject(intent); break;
+            case PROCESS_EVENT_MAP: processEventMap(intent); break;
+            case REGISTER_SURVEY: registerSurvey(intent); break;
+            case SAVE_EPL_PATTERN: saveEplPattern(intent); break;
+            case SAVE_EPL_PATTERN_AND_TRIGGER_SURVEY: saveEplPatternAndTriggerSurvey(intent); break;
+            case DELETE_SURVEY: deleteSurvey(intent); break;
+            case DELETE_PATTERN: deleteEPLPattern(intent); break;
+            case DELETE_ALL_PATTERNS_BESIDES: deleteAllPatternsBesides(intent);break;
+            case DELETE_ALL_SURVEYS_BESIDES: deleteAllSurveysBesides(intent);break;
+            default:
+                break;
+        }
+    }
+
+    private int extractCommandFromIntent(Intent intent) {
+        return intent.getIntExtra("command", -1);
+    }
+
+    private void deleteAllSurveysBesides(Intent intent) {
+        String[] surveyIds = intent.getStringArrayExtra("surveys");
+        esperWrapper.removeAllSurveysBesides(surveyIds);
+    }
+
+    private void deleteAllPatternsBesides(Intent intent) {
+        String[] queries = intent.getStringArrayExtra("queries");
+        esperWrapper.removeAllQueriesBesides(queries);
+    }
+
+    private void deleteEPLPattern(Intent intent) {
+        esperWrapper.removeQuery(getQueryId(intent));
+    }
+
+    private void deleteSurvey(Intent intent) {
+        esperWrapper.unregisterQuestionnaire(Integer.valueOf(getSurvey(intent)).toString());
+    }
+
+    private void saveEplPatternAndTriggerSurvey(Intent intent) {
+        esperWrapper.triggerQuestionnaire(getSurveyName(intent))
+                .onQuery(getQuery(intent), intent.getIntExtra("id", -1));
+    }
+
+    private void saveEplPattern(Intent intent) {
+        esperWrapper.doEplQuery(getQuery(intent));
+    }
+
+    private void registerSurvey(final Intent intent) {
+        esperWrapper.registerQuestionnaire(getSurveyName(intent), new IComplexEventListener() {
+            @Override
+            public void eventOccurred() {
+                Log.d(DBG_TAG, "A Complex event happened");
+                int surveyId = getSurvey(intent);
+                sendComplexEventOccurredNotification(surveyId);
+            }
+        });
+    }
+
+    private void sendComplexEventOccurredNotification(int surveyId) {
+        Intent sendingIntent = new Intent(ACTION_COMPLEX_EVENT);
+        sendingIntent.putExtra("survey", surveyId);
+        sendBroadcast(sendingIntent);
+    }
+
+    private void processEventMap(Intent intent) {
+        esperWrapper.eventHappened((HashMap)intent.getSerializableExtra("event"), intent.getStringExtra("name"));
+    }
+
+    private void processEventObject(Intent intent) {
+        esperWrapper.eventHappened(intent.getParcelableExtra("event"));
     }
 
     @Override
@@ -99,9 +117,6 @@ public class EventService extends Service {
         super.onCreate();
         Log.d(DBG_TAG, "Livy Service Created");
         esperWrapper =  new EsperWrapper(new AsperLoader(this));
-        IntentFilter  filter = new IntentFilter();
-        filter.addAction(EventService.ACTION_CEP_SERVICE);
-        registerReceiver(receiver, filter);
     }
 
     @Override
@@ -109,17 +124,12 @@ public class EventService extends Service {
         return null;
     }
 
-
     private String getSurveyName(Intent intent) {
         return Integer.toString(intent.getIntExtra("survey", -1));
     }
 
-    private String getQuery(Intent intent) { return intent.getStringExtra("query");}
-    private int getQueryId(Intent intent){ return getIntFromIntent(intent, "queryId");}
-    private int getSurvey(Intent intent) { return  getIntFromIntent(intent, "survey");}
-    private int getIntFromIntent(Intent intent, String name) {
-        return intent.getIntExtra(name, -1);
-    }
-
-
+    private String getQuery(Intent intent) { return intent.getStringExtra("query"); }
+    private int getQueryId(Intent intent){ return getIntFromIntent(intent, "queryId"); }
+    private int getSurvey(Intent intent) { return  getIntFromIntent(intent, "survey"); }
+    private int getIntFromIntent(Intent intent, String name) { return intent.getIntExtra(name, -1); }
 }
