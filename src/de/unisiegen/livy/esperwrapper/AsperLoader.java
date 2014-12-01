@@ -15,10 +15,8 @@ public class AsperLoader {
     private final String optimizedFolderName = "dex_output";
     private final Context context;
     private DexClassLoader dexClassLoader;
-    private Object epRuntime;
-    private Class epRuntimeClass;
-    private Object epAdministrator;
-    private Class epAdministratorClass;
+    private EPRuntimeProxy epRuntime;
+    private EplAdministratorProxy epAdministrator;
 
     public AsperLoader(Context context){
         this.context = context;
@@ -32,21 +30,17 @@ public class AsperLoader {
             Object epServiceProvider = getDefaultProvider.invoke(null);
             Method getEPRuntime = epServiceProvider.getClass().getMethod("getEPRuntime");
 
-            epRuntime = getEPRuntime.invoke(epServiceProvider);
-            epRuntimeClass = epRuntime.getClass();
+            epRuntime = new EPRuntimeProxy(getEPRuntime.invoke(epServiceProvider));
             Method getEPAdministrator = epServiceProvider.getClass().getMethod("getEPAdministrator");
-            epAdministrator = getEPAdministrator.invoke(epServiceProvider);
-            epAdministratorClass = epAdministrator.getClass();
+            Class updateListenerClass = dexClassLoader.loadClass("com.espertech.esper.client.UpdateListener");
+            epAdministrator = new EplAdministratorProxy(getEPAdministrator.invoke(epServiceProvider), updateListenerClass);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public DexClassLoader getDexClassLoader(){
-        return dexClassLoader;
-    }
 
-    public Object getEPRuntime(){
+    public EPRuntimeProxy getEPRuntime(){
        return epRuntime;
     }
 
@@ -65,8 +59,6 @@ public class AsperLoader {
      * in the assets.
      */
     private boolean copyFileFromAssetsToInternalStorage(String sourceFileName, String targetFolder) {
-
-
         final File dexInternalStoragePath = new File(context.getDir(targetFolder, Context.MODE_PRIVATE),
                 sourceFileName);
         BufferedInputStream bis = null;

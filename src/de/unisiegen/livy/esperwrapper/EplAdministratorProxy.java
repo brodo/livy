@@ -10,24 +10,19 @@ import java.util.List;
 public class EplAdministratorProxy {
     private Object administrator;
     private Class administratorClass;
-    public EplAdministratorProxy(Object administrator) {
+    private Class updateListenerClass;
+
+    public EplAdministratorProxy(Object administrator, Class updateListenerClass) {
         this.administrator = administrator;
         this.administratorClass = administrator.getClass();
+        this.updateListenerClass = updateListenerClass;
     }
 
-    public void doEplQuery(String epl){
-        try {
-            Method createEPL = administratorClass.getMethod("createEPL", String.class);
-            createEPL.invoke(administrator, epl);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 
-    public Object getStatementByName(String queryName){
+    public EPStatementProxy getStatement(String queryName){
         try {
             Method getStatement = administratorClass.getMethod("getStatement", String.class);
-            return getStatement.invoke(administrator, queryName);
+            return new EPStatementProxy(getStatement.invoke(administrator, queryName), updateListenerClass);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,20 +40,20 @@ public class EplAdministratorProxy {
         return new ArrayList<String>();
     }
 
-    public Object statementFormString(String query){
+    public EPStatementProxy createEPL(String epl){
         try {
-            Method createEpl = administratorClass.getMethod("createEPL", String.class);
-            return createEpl.invoke(administrator, query);
+            Method createEPL = administratorClass.getMethod("createEPL", String.class);
+            return new EPStatementProxy(createEPL.invoke(administrator, epl), updateListenerClass);
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public Object statementFromStringWithName(String query, String name){
+    public EPStatementProxy createEPL(String query, String name){
         try {
-            Method createEPL =  createEPL = administratorClass.getMethod("createEPL", String.class, String.class);
-            return createEPL.invoke(administrator, query, name);
+            Method createEPL = administratorClass.getMethod("createEPL", String.class, String.class);
+            return new EPStatementProxy(createEPL.invoke(administrator, query, name), updateListenerClass);
         } catch (Exception e){
             e.printStackTrace();
         }
