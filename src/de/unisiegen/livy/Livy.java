@@ -22,83 +22,81 @@ public class Livy  {
         context.startService(makeIntentWithEventMap(event, name, context));
     }
 
-    public static void saveSurveyId(int surveyId, Context context) {
-        context.startService(makeIntentWithSurveyId(surveyId, context));
-    }
-
     public static void saveEplPattern(String query, Context context) {
         context.startService(makeIntentWithEplQuery(query, context));
     }
 
-    public static void saveEplPatternWithSurveyToTrigger(String query, int queryId, int surveyId, Context context) {
-        context.startService(makeIntentWithEplQueryAndSurveyId(query, queryId, surveyId, context));
+    public static void saveEplPatternWithSurveyToTrigger(String query, int patternId, int surveyId, Context context) {
+        context.startService(makeIntentWithEplQueryAndSurveyId(query, patternId, surveyId, context));
     }
 
     public static void deleteEplPatternById(int id, Context context){
         context.startService(makeIntentForDeletingQuery(id, context));
     }
 
-    public static void deleteSurveyId(int id, Context context){
-        context.startService(makeIntentForDeletingSurveyWithId(id, context));
+    public static void deleteAllEplPatterns(Context context){
+        context.startService(makeIntentForDeletingAllQueries(context));
     }
 
-    public static void deleteAllEplPatternsBesides(String[] exceptionIds, Context context){
-        context.startService(makeIntentForDeletingAllQueriesBesides(exceptionIds, context));
+    public static void addSurveyToPattern(int patternId, int surveyId, Context context){
+        context.startService(makeIntentForAddingSurveyToPattern(patternId, surveyId, context));
     }
 
+    public static void getPatternList(Context context){
+        makeIntentForGettingPatternList(context);
+    }
 
-    private static Intent makeIntentForDeletingAllQueriesBesides(String[] queries, Context context){
+    protected static Intent makeIntentForGettingPatternList(Context context){
         Intent intent = createEventServiceIntent(context);
-        intent.putExtra("command", EventService.DELETE_ALL_PATTERNS_BESIDES);
-        intent.putExtra("queries", queries);
+        intent.putExtra("command", EventService.GET_STATEMENTS);
+        return intent;
+
+    }
+
+    protected static Intent makeIntentForAddingSurveyToPattern(int patternId, int surveyId, Context context){
+        Intent intent = createEventServiceIntent(context);
+        intent.putExtra("command", EventService.ADD_SURVEY_TO_PATTERN);
+        intent.putExtra("queryId", patternId);
+        intent.putExtra("surveyId", surveyId);
         return intent;
     }
 
-    private static Intent makeIntentForDeletingQuery(int queryId, Context context){
+    protected static Intent makeIntentForDeletingAllQueries(Context context){
+        Intent intent = createEventServiceIntent(context);
+        intent.putExtra("command", EventService.DELETE_ALL_PATTERNS);
+        return intent;
+    }
+
+    protected static Intent makeIntentForDeletingQuery(int queryId, Context context){
         Intent intent = createEventServiceIntent(context);
         intent.putExtra("command", EventService.DELETE_PATTERN);
         intent.putExtra("queryId", queryId);
         return intent;
     }
 
-    private static Intent makeIntentForDeletingSurveyWithId(int surveyId, Context context){
-        Intent intent = createEventServiceIntent(context);
-        intent.putExtra("command", EventService.DELETE_SURVEY);
-        intent.putExtra("survey", surveyId);
-        return intent;
-    }
-
-    private static Intent makeIntentWithSurveyId(int surveyId, Context context) {
-        Intent intent = createEventServiceIntent(context);
-        intent.putExtra("command", EventService.REGISTER_SURVEY);
-        intent.putExtra("survey", surveyId);
-        return intent;
-    }
-
-    private static Intent makeIntentWithEvent(Parcelable event, Context context) {
+    protected static Intent makeIntentWithEvent(Parcelable event, Context context) {
         Intent intent = createEventServiceIntent(context);
         intent.putExtra("command", EventService.PROCESS_EVENT_OBJECT);
         intent.putExtra("event", event);
         return intent;
     }
 
-    private static Intent makeIntentWithEventMap(HashMap event, String name, Context context){
+    protected static Intent makeIntentWithEventMap(HashMap event, String name, Context context){
         Intent intent = createEventServiceIntent(context);
-
         intent.putExtra("command", EventService.PROCESS_EVENT_MAP);
         intent.putExtra("event", event);
         intent.putExtra("name", name);
         return intent;
     }
 
-    private static Intent makeIntentWithEplQuery(String query, Context context) {
+    protected static Intent makeIntentWithEplQuery(String query, Context context) {
         Intent intent = createEventServiceIntent(context);
         intent.putExtra("command", EventService.SAVE_EPL_PATTERN);
         intent.putExtra("query", query);
         return intent;
     }
 
-    private static Intent makeIntentWithEplQueryAndSurveyId(String query, int queryId, int surveyId, Context context) {
+    protected static Intent makeIntentWithEplQueryAndSurveyId(String query, int queryId, int surveyId, Context context) {
         Intent intent = createEventServiceIntent(context);
         intent.putExtra("command", EventService.SAVE_EPL_PATTERN_AND_TRIGGER_SURVEY);
         intent.putExtra("query", query);
@@ -107,9 +105,7 @@ public class Livy  {
         return intent;
     }
 
-    private static Intent createEventServiceIntent(Context context) {
+    protected static Intent createEventServiceIntent(Context context) {
         return new Intent(context, EventService.class);
     }
-
-
 }

@@ -44,7 +44,7 @@ public class AsperLoader {
        return epRuntime;
     }
 
-    public Object getEPAdministrator() {
+    public EplAdministratorProxy getEPAdministrator() {
         return epAdministrator;
     }
 

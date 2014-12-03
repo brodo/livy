@@ -1,8 +1,8 @@
 package de.unisiegen.livy.esperwrapper;
 
+import android.util.Log;
+
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Julian Dax on 30.11.14.
@@ -11,6 +11,7 @@ public class EplAdministratorProxy {
     private Object administrator;
     private Class administratorClass;
     private Class updateListenerClass;
+    private static String LOG_TAG = "Livy/EplAdministratorProxy";
 
     public EplAdministratorProxy(Object administrator, Class updateListenerClass) {
         this.administrator = administrator;
@@ -19,25 +20,26 @@ public class EplAdministratorProxy {
     }
 
 
-    public EPStatementProxy getStatement(String queryName){
+    public EPStatementProxy getStatement(String statementName){
         try {
             Method getStatement = administratorClass.getMethod("getStatement", String.class);
-            return new EPStatementProxy(getStatement.invoke(administrator, queryName), updateListenerClass);
+            Object statement = getStatement.invoke(administrator, statementName);
+            if(statement == null) return null;
+            return new EPStatementProxy(statement, updateListenerClass);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Could not get statement by name", e);
         }
         return null;
     }
 
-    public List<String> getStatementNames() {
-        Method getStatementNames = null;
+    public String[] getStatementNames() {
         try {
-            getStatementNames = administratorClass.getMethod("getStatementNames");
-            return (List<String>) getStatementNames.invoke(administrator);
+            Method getStatementNames = administratorClass.getMethod("getStatementNames");
+            return (String[]) getStatementNames.invoke(administrator);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Could not get statement names", e);
         }
-        return new ArrayList<String>();
+        return new String[]{};
     }
 
     public EPStatementProxy createEPL(String epl){
@@ -45,7 +47,7 @@ public class EplAdministratorProxy {
             Method createEPL = administratorClass.getMethod("createEPL", String.class);
             return new EPStatementProxy(createEPL.invoke(administrator, epl), updateListenerClass);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Could not create EPL", e);
         }
         return null;
     }
@@ -55,9 +57,19 @@ public class EplAdministratorProxy {
             Method createEPL = administratorClass.getMethod("createEPL", String.class, String.class);
             return new EPStatementProxy(createEPL.invoke(administrator, query, name), updateListenerClass);
         } catch (Exception e){
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Could not create EPL", e);
         }
         return null;
+    }
+
+    public void destroyAllStatements(){
+        try {
+            Method destroyAllStatements = administratorClass.getMethod("destroyAllStatements");
+            destroyAllStatements.invoke(administrator);
+        } catch (Exception e){
+            Log.e(LOG_TAG, "Could not destroy all EPL statements", e);
+        }
+
     }
 
 }

@@ -3,6 +3,8 @@
  */
 package de.unisiegen.livy.esperwrapper;
 
+import java.util.List;
+
 public interface UpdateListener {
-    public void update(Object[] newEvents, Object[] oldEvents);
+    public void update(List<EventBeanProxy> newEvents, List<EventBeanProxy> oldEvents);
 }

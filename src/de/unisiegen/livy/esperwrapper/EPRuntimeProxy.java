@@ -1,7 +1,8 @@
 package de.unisiegen.livy.esperwrapper;
 
+import android.util.Log;
+
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -10,17 +11,19 @@ import java.util.Map;
 public class EPRuntimeProxy {
     private Object epRuntime;
     private Class epRuntimeClass;
+    private static String LOG_TAG = "Livy/EPRuntimeProxy";
+
     public EPRuntimeProxy(Object epRuntime) {
         this.epRuntime = epRuntime;
         epRuntimeClass = epRuntime.getClass();
     }
 
-    public void sendEvent(HashMap event, String name){
+    public void sendEvent(Map event, String name){
         try {
             Method sendEvent = epRuntimeClass.getMethod("sendEvent", Map.class, String.class);
             sendEvent.invoke(epRuntime, event, name);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Could not send event", e);
         }
     }
 
@@ -29,7 +32,7 @@ public class EPRuntimeProxy {
             Method sendEvent = epRuntimeClass.getMethod("sendEvent", Object.class);
             sendEvent.invoke(epRuntime, event);
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(LOG_TAG, "Could not send event", e);
         }
     }
 }
