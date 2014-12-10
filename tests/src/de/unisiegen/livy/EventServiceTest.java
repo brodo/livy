@@ -19,10 +19,7 @@ public class EventServiceTest extends ServiceTestCase<EventService> {
 
     public void testFindingComplexEvents() throws Exception {
         doQuery("create schema TestSchema(test string)");
-        String query = "select * from TestSchema";
-        int queryId = 1;
-        int surveyId = 1;
-        doQuery(query, queryId, surveyId);
+        doQuery("select * from TestSchema", 1, 1);
 
         final CountDownLatch signal = new CountDownLatch(1);
         BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -71,8 +68,9 @@ public class EventServiceTest extends ServiceTestCase<EventService> {
 
     }
 
-    public void testFindRoute() throws Exception {
+    public void testFindPoi() throws Exception {
         doQuery("create schema GeoProbe(location_longitude double, location_latitude double, location_altitude double, location_speed double, location_action string, timestamp double)");
+        doQuery("select * from [GeoProbe()");
 
 
     }

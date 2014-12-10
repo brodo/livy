@@ -26,8 +26,8 @@ public class Livy  {
         context.startService(makeIntentWithEplQuery(query, context));
     }
 
-    public static void saveEplPatternWithSurveyToTrigger(String query, int patternId, int surveyId, Context context) {
-        context.startService(makeIntentWithEplQueryAndSurveyId(query, patternId, surveyId, context));
+    public static void saveEplPatternWithSurveyToTrigger(String query, String patternName, String surveyName, Context context) {
+        context.startService(makeIntentWithEplQueryAndSurveyId(query, patternName, surveyName, context));
     }
 
     public static void deleteEplPatternById(int id, Context context){
@@ -38,8 +38,8 @@ public class Livy  {
         context.startService(makeIntentForDeletingAllQueries(context));
     }
 
-    public static void addSurveyToPattern(int patternId, int surveyId, Context context){
-        context.startService(makeIntentForAddingSurveyToPattern(patternId, surveyId, context));
+    public static void addSurveyToPattern(String patternName, String surveyName, Context context){
+        context.startService(makeIntentForAddingSurveyToPattern(patternName, surveyName, context));
     }
 
     public static void getPatternList(Context context){
@@ -53,11 +53,11 @@ public class Livy  {
 
     }
 
-    protected static Intent makeIntentForAddingSurveyToPattern(int patternId, int surveyId, Context context){
+    protected static Intent makeIntentForAddingSurveyToPattern(String patternName, String surveyName, Context context){
         Intent intent = createEventServiceIntent(context);
         intent.putExtra("command", EventService.ADD_SURVEY_TO_PATTERN);
-        intent.putExtra("queryId", patternId);
-        intent.putExtra("surveyId", surveyId);
+        intent.putExtra("queryId", patternName);
+        intent.putExtra("surveyId", surveyName);
         return intent;
     }
 
@@ -96,12 +96,12 @@ public class Livy  {
         return intent;
     }
 
-    protected static Intent makeIntentWithEplQueryAndSurveyId(String query, int queryId, int surveyId, Context context) {
+    protected static Intent makeIntentWithEplQueryAndSurveyId(String query, String queryName, String surveyName, Context context) {
         Intent intent = createEventServiceIntent(context);
         intent.putExtra("command", EventService.SAVE_EPL_PATTERN_AND_TRIGGER_SURVEY);
         intent.putExtra("query", query);
-        intent.putExtra("id", queryId);
-        intent.putExtra("survey", surveyId);
+        intent.putExtra("id", queryName);
+        intent.putExtra("survey", surveyName);
         return intent;
     }
 

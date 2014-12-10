@@ -84,7 +84,7 @@ public class EventService extends Service {
     }
 
     private EPStatementProxy saveEplPattern(Intent intent) {
-        return getQueryId(intent) == -1 ?
+        return getQueryName(intent) == null ?
                 administrator.createEPL(getQuery(intent)) :
                 administrator.createEPL(getQuery(intent), stringFromInt(getStatementId(intent)));
 
@@ -97,7 +97,7 @@ public class EventService extends Service {
     }
 
     private void deleteEPLPattern(Intent intent) {
-        EPStatementProxy statement = administrator.getStatement(stringFromInt(getQueryId(intent)));
+        EPStatementProxy statement = administrator.getStatement(getQueryName(intent));
         if(statement != null){
             statement.removeAllListeners();
             statement.destroy();
@@ -109,8 +109,7 @@ public class EventService extends Service {
     }
 
     private void addSurveyToPattern(Intent intent){
-        String statementName = stringFromInt(getQueryId(intent));
-        EPStatementProxy statement = administrator.getStatement(statementName);
+        EPStatementProxy statement = administrator.getStatement(getQueryName(intent));
         if(statement != null) statement.addListener(new ComplexEventListener(intent));
         else Log.e(LOG_TAG, "Could not find EPL pattern to add survey to");
     }
@@ -122,12 +121,12 @@ public class EventService extends Service {
         sendBroadcast(sendingIntent);
     }
 
-    private void sendComplexEventOccurredNotification(int surveyId, List<EventBeanProxy> newEvents,
+    private void sendComplexEventOccurredNotification(String surveyName, List<EventBeanProxy> newEvents,
                                                       List<EventBeanProxy> oldEvents ) {
         Intent sendingIntent = new Intent(ACTION_COMPLEX_EVENT);
         sendingIntent.putExtra("newEvents", eventBeanProxiesToSerializables(newEvents));
         sendingIntent.putExtra("oldEvents", eventBeanProxiesToSerializables(oldEvents));
-        sendingIntent.putExtra("survey", surveyId);
+        sendingIntent.putExtra("survey", surveyName);
         sendBroadcast(sendingIntent);
     }
 
@@ -141,9 +140,9 @@ public class EventService extends Service {
 
     private int getStatementId(Intent intent){ return intent.getIntExtra("id", -1);}
     private String stringFromInt(int number){ return Integer.valueOf(number).toString();}
-    private int getSurveyId(Intent intent) { return intent.getIntExtra("survey", -1);}
+    private String getSurveyName(Intent intent) { return intent.getStringExtra("survey");}
     private String getQuery(Intent intent) { return intent.getStringExtra("query"); }
-    private int getQueryId(Intent intent){ return getIntFromIntent(intent, "queryId"); }
+    private String getQueryName(Intent intent){ return intent.getStringExtra("queryId"); }
     private int getSurvey(Intent intent) { return  getIntFromIntent(intent, "survey"); }
     private int getIntFromIntent(Intent intent, String name) { return intent.getIntExtra(name, -1); }
 
@@ -156,7 +155,7 @@ public class EventService extends Service {
 
         @Override
         public void update(List<EventBeanProxy> newEvents, List<EventBeanProxy> oldEvents) {
-            sendComplexEventOccurredNotification(getSurveyId(intent), newEvents, oldEvents);
+            sendComplexEventOccurredNotification(getSurveyName(intent), newEvents, oldEvents);
         }
     }
 }
