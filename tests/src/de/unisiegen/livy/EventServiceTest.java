@@ -19,7 +19,7 @@ public class EventServiceTest extends ServiceTestCase<EventService> {
 
     public void testFindingComplexEvents() throws Exception {
         doQuery("create schema TestSchema(test string)");
-        doQuery("select * from TestSchema", 1, 1);
+        doQuery("select * from TestSchema", "1", "1");
 
         final CountDownLatch signal = new CountDownLatch(1);
         BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -40,13 +40,12 @@ public class EventServiceTest extends ServiceTestCase<EventService> {
         sendEvent(event, "TestSchema");
 
         signal.await();
-
     }
 
 
     public void testFindingComplexEventsTwice() throws Exception {
         doQuery("create schema TestSchema(test string)");
-        doQuery("select * from TestSchema", 1, 1);
+        doQuery("select * from TestSchema", "1", "1");
 
         final CountDownLatch signal = new CountDownLatch(2);
         BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -65,14 +64,11 @@ public class EventServiceTest extends ServiceTestCase<EventService> {
         sendEvent(event, schemaName);
         sendEvent(event, "TestSchema");
         signal.await();
-
     }
 
     public void testFindPoi() throws Exception {
         doQuery("create schema GeoProbe(location_longitude double, location_latitude double, location_altitude double, location_speed double, location_action string, timestamp double)");
         doQuery("select * from [GeoProbe()");
-
-
     }
 
     private void sendEvent(HashMap<String, String> event, String schemaName) {
@@ -81,8 +77,8 @@ public class EventServiceTest extends ServiceTestCase<EventService> {
 
 
 
-    private void doQuery(String query, int queryId, int surveyId) {
-        startService(Livy.makeIntentWithEplQueryAndSurveyId(query, queryId, surveyId, getContext()));
+    private void doQuery(String query, String queryName, String surveyName) {
+        startService(Livy.makeIntentWithEplQueryAndSurveyId(query, queryName, surveyName, getContext()));
     }
 
     private void doQuery(String query) {
